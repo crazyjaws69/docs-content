@@ -1,7 +1,11 @@
-name: Cloudflare Pages
+name: Vercel Preview Deployment
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - vercel-preview
+  pr:
+    type: [opened, synchronize]
 
 jobs:
   run:
@@ -11,10 +15,9 @@ jobs:
       APP_ENV: prod
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: "npm"
@@ -32,30 +35,30 @@ jobs:
           find ./content/hardware -type f -name "*-pinout.png" -exec cp {} ./static/resources/pinouts/ \;
 
       - name: Gatsby main cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: gatsby-cache-folder
         with:
           path: .cache
-          key: ${{ runner.os }}-cache-gatsbyV2-${{ github.sha }}
+          key: ${{ runner.os }}-cache-gatsbyV2-vercel-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-cache-gatsbyV2-
+            ${{ runner.os }}-cache-gatsbyV2-vercel-
 
       - name: Gatsby Public Folder
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: gatsby-public-folder
         with:
           path: public/
-          key: ${{ runner.os }}-public-gatsbyV2-${{ github.sha }}
+          key: ${{ runner.os }}-public-gatsbyV2-vercel-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-public-gatsbyV2-
+            ${{ runner.os }}-public-gatsbyV2-vercel-
 
       - run: npm install
       - run: npm run build
 
-      - name: Docs
-        uses: ./.github/actions/cloudflare-upload
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
         with:
-          upload-dir: public
-          project-name: docs-content
-          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          cloudflare-account: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
+          working-directory: ./public
