@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - vercel-preview
-  pr:
-    type: [opened, synchronize]
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
   run:
